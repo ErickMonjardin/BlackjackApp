@@ -2,6 +2,7 @@ package com.example.blackjack.viewmodels
 
 import androidx.lifecycle.ViewModel
 import com.example.blackjack.data.Carta
+import com.example.blackjack.data.ConfigManager
 import com.example.blackjack.data.HistorialManager
 import com.example.blackjack.data.Partida
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -11,7 +12,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-class JuegoViewModel : ViewModel() { // <-- ¡Adiós DAO y base de datos!
+class JuegoViewModel : ViewModel() {
 
     private val palos = listOf("♥", "♦", "♣", "♠")
     private val valores = listOf("2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A")
@@ -40,11 +41,19 @@ class JuegoViewModel : ViewModel() { // <-- ¡Adiós DAO y base de datos!
         _mensajeFinal.value = ""
         crearYBarajear()
 
-        // Repartimos 2 cartas a cada uno al empezar
-        _manoJugador.value = listOf(mazo.removeAt(mazo.lastIndex), mazo.removeAt(mazo.lastIndex))
-        _manoCrupier.value = listOf(mazo.removeAt(mazo.lastIndex), mazo.removeAt(mazo.lastIndex))
+        val meta = ConfigManager.metaPuntos.value
 
-        AlIncio21()
+        // Si la meta es 11, solo damos 1 carta para que no pierdan al instante
+        if (meta == 11) {
+            _manoJugador.value = listOf(mazo.removeAt(mazo.lastIndex))
+            _manoCrupier.value = listOf(mazo.removeAt(mazo.lastIndex))
+        } else {
+            // Para 21 y 25, damos las 2 cartas
+            _manoJugador.value = listOf(mazo.removeAt(mazo.lastIndex), mazo.removeAt(mazo.lastIndex))
+            _manoCrupier.value = listOf(mazo.removeAt(mazo.lastIndex), mazo.removeAt(mazo.lastIndex))
+        }
+
+        AlInicio21()
     }
 
     private fun crearYBarajear() {
@@ -69,8 +78,9 @@ class JuegoViewModel : ViewModel() { // <-- ¡Adiós DAO y base de datos!
         nuevaMano.add(mazo.removeAt(mazo.lastIndex))
         _manoJugador.value = nuevaMano
 
-        // Si el jugador se pasa de 21, pierde en automatico
-        if (calcularPuntos(_manoJugador.value) > 21) {
+        val meta = ConfigManager.metaPuntos.value
+        // Si el jugador se pasa de la meta, pierde
+        if (calcularPuntos(_manoJugador.value) > meta) {
             finalizarJuego("Crupier")
         }
     }
@@ -78,11 +88,13 @@ class JuegoViewModel : ViewModel() { // <-- ¡Adiós DAO y base de datos!
     fun plantarse() {
         if (_juegoTerminado.value) return
 
+        val meta = ConfigManager.metaPuntos.value
+        val limiteCrupier = meta - 4 // Se planta a 4 puntos de la meta
+
         var puntosCrupier = calcularPuntos(_manoCrupier.value)
         val manoActualCrupier = _manoCrupier.value.toMutableList()
 
-        // Crupier saca cartas obligatoriamente hasta tener 17 o mas
-        while (puntosCrupier < 17) {
+        while (puntosCrupier < limiteCrupier) {
             manoActualCrupier.add(mazo.removeAt(mazo.lastIndex))
             puntosCrupier = calcularPuntos(manoActualCrupier)
         }
@@ -90,9 +102,8 @@ class JuegoViewModel : ViewModel() { // <-- ¡Adiós DAO y base de datos!
 
         val puntosJugador = calcularPuntos(_manoJugador.value)
 
-        // Evaluamos quien gano
         val ganador = when {
-            puntosCrupier > 21 -> "Jugador" // Si el crupier se pasa
+            puntosCrupier > meta -> "Jugador"
             puntosJugador > puntosCrupier -> "Jugador"
             puntosCrupier > puntosJugador -> "Crupier"
             else -> "Empate"
@@ -100,44 +111,49 @@ class JuegoViewModel : ViewModel() { // <-- ¡Adiós DAO y base de datos!
         finalizarJuego(ganador)
     }
 
-    // Logica para contar puntos y cambiar el valor del As
     fun calcularPuntos(mano: List<Carta>): Int {
         var total = 0
         var cantidadDeAses = 0
+        val meta = ConfigManager.metaPuntos.value
 
         for (carta in mano) {
             total += carta.puntosBasicos
             if (carta.valor == "A") cantidadDeAses++
         }
 
-        // Si nos pasamos de 21 y tenemos un As, le restamos 10 puntos
-        while (total > 21 && cantidadDeAses > 0) {
+        // Si nos pasamos de la meta y tenemos un As, le restamos 10 puntos
+        while (total > meta && cantidadDeAses > 0) {
             total -= 10
             cantidadDeAses--
         }
         return total
     }
 
-    private fun AlIncio21() {
+    private fun AlInicio21() {
+        val meta = ConfigManager.metaPuntos.value
         val puntosJugador = calcularPuntos(_manoJugador.value)
         val puntosCrupier = calcularPuntos(_manoCrupier.value)
 
-        if (puntosJugador == 21 && puntosCrupier == 21) finalizarJuego("Empate")
-        else if (puntosJugador == 21) finalizarJuego("Jugador")
-        else if (puntosCrupier == 21) finalizarJuego("Crupier")
+        if (puntosJugador == meta && puntosCrupier == meta) finalizarJuego("Empate")
+        else if (puntosJugador == meta) finalizarJuego("Jugador")
+        else if (puntosCrupier == meta) finalizarJuego("Crupier")
     }
-
     private fun finalizarJuego(ganador: String) {
         _juegoTerminado.value = true
         _mensajeFinal.value = if (ganador == "Empate") "Empate!" else "Ganador: $ganador"
 
         // Preparamos los datos para guardarlos en nuestra Lista
         val combinacion = if (ganador == "Jugador") {
-            _manoJugador.value.joinToString { "${it.valor}${it.palo}" }
+            val puntos = calcularPuntos(_manoJugador.value)
+            val textoCartas = _manoJugador.value.joinToString { "${it.valor}${it.palo}" }
+            "$textoCartas ($puntos puntos)"
         } else if (ganador == "Crupier") {
-            _manoCrupier.value.joinToString { "${it.valor}${it.palo}" }
+            val puntos = calcularPuntos(_manoCrupier.value)
+            val textoCartas = _manoCrupier.value.joinToString { "${it.valor}${it.palo}" }
+            "$textoCartas ($puntos puntos)"
         } else {
-            "Empate"
+            val puntos = calcularPuntos(_manoJugador.value)
+            "Empate por $puntos puntos"
         }
 
         val sdf = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())

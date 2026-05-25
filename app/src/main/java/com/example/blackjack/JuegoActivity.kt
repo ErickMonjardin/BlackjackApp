@@ -15,6 +15,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.blackjack.data.ConfigManager
 import com.example.blackjack.viewmodels.JuegoViewModel
 
 class JuegoActivity : ComponentActivity() {
@@ -23,7 +24,7 @@ class JuegoActivity : ComponentActivity() {
 
         setContent {
             MaterialTheme {
-                // Instanciamos el ViewModel de forma directa y sencilla
+                // Instanciamos el ViewModel
                 val viewModel: JuegoViewModel = viewModel()
 
                 // Escuchamos los estados del juego
@@ -35,13 +36,13 @@ class JuegoActivity : ComponentActivity() {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(Color(0xFF2C2C2C)) // Fondo oscuro
+                        .background(ConfigManager.colorFondo.value) // Fondo oscuro
                         .padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Spacer(modifier = Modifier.height(32.dp))
 
-                    // --- ZONA DEL CRUPIER ---
+                    // Zona del crupier
                     Text("Crupier", fontSize = 28.sp, color = Color.White, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(8.dp))
                     Row(horizontalArrangement = Arrangement.Center) {
@@ -58,7 +59,7 @@ class JuegoActivity : ComponentActivity() {
 
                     Spacer(modifier = Modifier.weight(1f))
 
-                    // --- ZONA DE MENSAJES Y RESET ---
+                    // Mensajes y boton de reset
                     if (juegoTerminado) {
                         Text(mensajeFinal, fontSize = 32.sp, color = Color(0xFFFFC107), fontWeight = FontWeight.Bold)
                         Spacer(modifier = Modifier.height(16.dp))
@@ -72,7 +73,7 @@ class JuegoActivity : ComponentActivity() {
 
                     Spacer(modifier = Modifier.weight(1f))
 
-                    // --- ZONA DEL JUGADOR ---
+                    // Zona del jugador
                     Text("Jugador", fontSize = 28.sp, color = Color.White, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(8.dp))
                     Row(horizontalArrangement = Arrangement.Center) {
@@ -84,7 +85,7 @@ class JuegoActivity : ComponentActivity() {
 
                     Spacer(modifier = Modifier.height(32.dp))
 
-                    // --- BOTONES DE ACCIÓN ---
+                    // Botones de la mesa
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceEvenly

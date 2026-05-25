@@ -38,12 +38,44 @@ class MainActivity : ComponentActivity() {
 
                     Spacer(modifier = Modifier.height(48.dp))
 
+                    // Botón Jugar
                     Button(
                         onClick = { context.startActivity(Intent(context, JuegoActivity::class.java)) },
                         modifier = Modifier.fillMaxWidth(0.6f).height(50.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
                     ) {
                         Text("Jugar ▶", fontSize = 20.sp)
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Boton Scores
+                    Button(
+                        onClick = { context.startActivity(Intent(context, ScoreActivity::class.java)) },
+                        modifier = Modifier.fillMaxWidth(0.6f).height(50.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00BCD4))
+                    ) {
+                        Text("Scores 📋", fontSize = 20.sp)
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Boton Reglas
+                    Button(
+                        onClick = { context.startActivity(Intent(context, InstruccionesActivity::class.java)) },
+                        modifier = Modifier.fillMaxWidth(0.6f).height(50.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFC107))
+                    ) {
+                        Text("Reglas 📖", fontSize = 20.sp, color = Color.Black)
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    // Botón Configuración
+                    Button(
+                        onClick = { context.startActivity(Intent(context, ConfiguracionActivity::class.java)) },
+                        modifier = Modifier.fillMaxWidth(0.6f).height(50.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF9C27B0))
+                    ) {
+                        Text("Ajustes ⚙️", fontSize = 20.sp, color = Color.White)
                     }
                 }
             }
